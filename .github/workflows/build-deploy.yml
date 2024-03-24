@@ -9,10 +9,7 @@ on:
 jobs:
     Build_Image:
         name: "Build Docker Image"
-        runs-on: pcoe-runner-linux-prod
-        permissions:
-            id-token: write
-            contents: read
+        runs-on: ubuntu-latest
 
         steps:
         #Hard code checking out main branch for now
@@ -27,37 +24,33 @@ jobs:
             subscription-id: ${{ inputs.SUBSCRIPTION_ID }}
         
         - name: Docker Build
-          working-directory: ${{ github.workspace }}
           run: |
-            cd ${{inputs.DOCKER_FILE_FOLDER}}
-            az acr login --name ${{ inputs.ACR_REGISTRY }}
-            az acr build --image ${{inputs.image_name}}:${{inputs.tag}} --registry ${{ inputs.ACR_REGISTRY }} -f ${{inputs.DOCKER_FILE}} .
+            cd dockerfile
+            az acr login --name tatatechcr
+            az acr build --image tatatechimage --registry tatatechcr -f dockerfile .
         - name: Print Image Name
           run: |
-            echo "The image pushed to ACR is backend-image:${{inputs.image_name}}:${{inputs.tag}}"
+            echo "The image pushed to ACR is backend-image:tatatechimage
 
     Deploy_Image:
         name: "Deploy Docker Image"
-        runs-on: pcoe-runner-linux-prod
-        permissions:
-            id-token: write
-            contents: read
+        runs-on: ubuntu-latest
 
         environment:
-            name: ${{ inputs.env_name}}
+            name: main
 
         steps:
 
         - name: Configure Azure
           uses: azure/login@v1
           with:
-            client-id: ${{ inputs.CLIENT_ID }}
-            tenant-id: ${{ inputs.TENANT_ID }}
-            subscription-id: ${{ inputs.SUBSCRIPTION_ID }}
+            client-id: ${{ vars.CLIENT_ID }}
+            tenant-id: ${{ vars.TENANT_ID }}
+            subscription-id: ${{ vars.SUBSCRIPTION_ID }}
 
         - name: Restarting Web App 
           run: |
             echo "Restarting container to pull latest image in ACR"
-            az webapp restart --name ${{ inputs.CONTAINER }} --subscription ${{ inputs.APP_SUBSCRIPTION_ID}} --resource-group ${{ inputs.APP_RESOURCE_GROUP}}
+            az webapp restart --name containermane --subscription ${{ vars.SUBSCRIPTION_ID }} --resource-group resoursegroupname
 
         
